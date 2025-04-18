@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daftar Produk | Kopi Manding</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">Kopi Manding</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Beranda</a></li>
+          <li class="nav-item"><a class="nav-link" href="tentang.html">Tentang</a></li>
+          <li class="nav-item"><a class="nav-link active" href="produk.html">Produk</a></li>
+          <li class="nav-item"><a class="nav-link" href="galeri.html">Galeri</a></li>
+          <li class="nav-item"><a class="nav-link" href="kontak.html">Kontak</a></li>
+          <li class="nav-item"><a class="nav-link" href="pemesanan.html">Pemesanan</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+
+  <div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Daftar Produk</h2>
+      <a href="tambah-produk.html" class="btn btn-primary">+ Tambah Produk</a>
+    </div>
+    <div class="row" id="daftarProduk"></div>
+  </div>
+
+  <!-- Modal Edit Produk -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="formEditProduk" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Produk</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editIndex">
+          <div class="mb-3">
+            <label class="form-label">Nama Produk</label>
+            <input type="text" class="form-control" id="editNama" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Gambar (upload baru untuk mengganti)</label>
+            <input type="file" class="form-control" id="editGambar" accept="image/*">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Keterangan</label>
+            <textarea class="form-control" id="editKeterangan" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Harga</label>
+            <input type="number" class="form-control" id="editHarga" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-dark text-white text-center py-3">
+    <p>&copy; 2025 Kopi Manding. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let produkList = JSON.parse(localStorage.getItem("produkList")) || [];
+    const produkContainer = document.getElementById("daftarProduk");
+
+    function tampilkanProduk() {
+      produkContainer.innerHTML = "";
+      if (produkList.length === 0) {
+        produkContainer.innerHTML = "<p>Belum ada produk ditambahkan.</p>";
+        return;
+      }
+
+      produkList.forEach((produk, index) => {
+        produkContainer.innerHTML += `
+          <div class="col-md-4 mb-4">
+            <div class="card h-100">
+              <img src="${produk.gambar}" class="card-img-top" alt="${produk.nama}">
+              <div class="card-body">
+                <h5 class="card-title">${produk.nama}</h5>
+                <p class="card-text">${produk.keterangan}</p>
+                <p class="fw-bold">Rp ${parseInt(produk.harga).toLocaleString("id-ID")}</p>
+                <button class="btn btn-warning btn-sm me-2" onclick="editProduk(${index})">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="hapusProduk(${index})">Hapus</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function editProduk(index) {
+      const p = produkList[index];
+      document.getElementById("editIndex").value = index;
+      document.getElementById("editNama").value = p.nama;
+      document.getElementById("editKeterangan").value = p.keterangan;
+      document.getElementById("editHarga").value = p.harga;
+      document.getElementById("editGambar").value = null;
+
+      new bootstrap.Modal(document.getElementById("editModal")).show();
+    }
+
+    function hapusProduk(index) {
+      if (confirm("Yakin ingin menghapus produk ini?")) {
+        produkList.splice(index, 1);
+        localStorage.setItem("produkList", JSON.stringify(produkList));
+        tampilkanProduk();
+      }
+    }
+
+    document.getElementById("formEditProduk").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const index = document.getElementById("editIndex").value;
+      const fileInput = document.getElementById("editGambar");
+      const produk = produkList[index];
+
+      function simpanDanRefresh(gambarBaru = null) {
+        produkList[index] = {
+          nama: document.getElementById("editNama").value,
+          gambar: gambarBaru || produk.gambar,
+          keterangan: document.getElementById("editKeterangan").value,
+          harga: document.getElementById("editHarga").value
+        };
+        localStorage.setItem("produkList", JSON.stringify(produkList));
+        bootstrap.Modal.getInstance(document.getElementById("editModal")).hide();
+        tampilkanProduk();
+      }
+
+      if (fileInput.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = () => simpanDanRefresh(reader.result);
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        simpanDanRefresh();
+      }
+    });
+
+    tampilkanProduk();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
